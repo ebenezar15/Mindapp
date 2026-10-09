@@ -21,6 +21,24 @@ Mindapp is an installable web app (PWA) that runs on **iPhone, iPad and Mac** fr
 
 All the "intelligence" (topic clustering, sequencing, suggestions, similarity) runs **on your device**. No account, no server and no AI service: your notes never leave your devices unless you email them.
 
+## Download for Mac, Windows and Linux
+
+Desktop versions of the same app, with notes saved privately on your computer:
+
+| Download | For |
+|---|---|
+| `Mindapp-Mac-AppleSilicon.zip` | Macs with an M1, M2, M3 or M4 chip (Apple menu → About This Mac → "Chip: Apple …") |
+| `Mindapp-Mac-Intel.zip` | Older Macs with an Intel processor |
+| `Mindapp-Windows.zip` | Windows 10 / 11 (64-bit) |
+| `Mindapp-Linux.zip` | 64-bit Linux |
+
+Each zip contains a **HOW TO INSTALL.txt** guide.
+- **Mac:** unzip, drag **Mindapp.app** to Applications, and double-click it. The first time, macOS blocks apps from outside the App Store, so go to **System Settings → Privacy & Security → Open Anyway**. If it says the app "is damaged", run `xattr -cr /Applications/Mindapp.app` in Terminal once.
+- **Windows:** Extract All, then run **Mindapp.exe**. If you see "Windows protected your PC", click **More info → Run anyway**.
+
+On desktop, voice input uses your computer's own dictation: **Fn (🌐) twice** on Mac, **Windows key + H** on Windows.
+To rebuild the desktop apps yourself: GitHub → **Actions → Desktop apps → Run workflow**, then download the zips from the run's artifacts. Or run `cd desktop && npm install && npm run build`.
+
 ## Install on iPhone and iPad
 
 Mindapp is a web app you add to your Home Screen. Once added, it opens full-screen like any other app and works offline.
@@ -89,6 +107,7 @@ js/mindmap.js        SVG mind map with pan / zoom / drag-to-regroup
 js/drag.js           pointer-based drag & drop (mouse, trackpad, touch, Pencil)
 js/export.js         Markdown, text, OPML, HTML export
 js/voice.js          voice to text (Web Speech API) with graceful fallback
+desktop/             Electron shell + build script for the Mac/Windows/Linux apps
 js/app.js            controller: UI wiring, dialogs, brainstorm, import, sync
 sw.js                offline cache
 ```

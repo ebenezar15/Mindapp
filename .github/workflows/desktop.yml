@@ -1,0 +1,31 @@
+name: Desktop apps
+
+# Builds Mindapp for Mac (Apple Silicon + Intel), Windows and Linux.
+# Run it from the Actions tab ("Run workflow"); download the zips from the run's Artifacts.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm test
+      - name: Install rcodesign (ad-hoc signing for Apple Silicon)
+        run: |
+          curl -sSL -o rc.tgz https://github.com/indygreg/apple-platform-rs/releases/download/apple-codesign%2F0.29.0/apple-codesign-0.29.0-x86_64-unknown-linux-musl.tar.gz
+          tar xzf rc.tgz
+          echo "RCODESIGN=$PWD/apple-codesign-0.29.0-x86_64-unknown-linux-musl/rcodesign" >> "$GITHUB_ENV"
+      - name: Build
+        working-directory: desktop
+        run: npm ci && npm run build
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Mindapp-desktop
+          path: desktop/dist/*.zip

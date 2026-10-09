@@ -5,7 +5,10 @@
 // Where speech recognition isn't available (for example some home-screen apps on older
 // iOS versions), the keyboard's own dictation 🎙 key works in every text box.
 
-const engine = () => (typeof window !== 'undefined' ? (window.SpeechRecognition || window.webkitSpeechRecognition) : null);
+// The desktop app (Electron) exposes the API but has no speech service behind it,
+// so there we hand over to the operating system's own dictation instead.
+const isDesktopApp = () => typeof navigator !== 'undefined' && /Electron/.test(navigator.userAgent);
+const engine = () => (typeof window === 'undefined' || isDesktopApp() ? null : (window.SpeechRecognition || window.webkitSpeechRecognition));
 
 export const voiceSupported = () => !!engine();
 
@@ -70,6 +73,12 @@ export function startDictation({ lang, onInterim, onFinal, onEnd, onError } = {}
 }
 
 export function unsupportedMessage() {
+  const ua = typeof navigator !== 'undefined' ? navigator.userAgent : '';
+  if (isDesktopApp()) {
+    if (/Mac/.test(ua)) return 'To dictate on your Mac: click in a text box, then press Fn (🌐) twice — or choose Edit → Start Dictation. Your words are typed in as you speak.';
+    if (/Windows/.test(ua)) return 'To dictate on Windows: click in a text box, then press Windows key + H. Your words are typed in as you speak.';
+    return 'Use your system’s dictation to speak into any text box.';
+  }
   return 'Voice input isn’t supported in this browser. Tip: tap the 🎙 key on your iPhone/iPad keyboard (or press Fn twice on a Mac) to dictate into any box.';
 }
 
