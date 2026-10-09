@@ -118,7 +118,7 @@ function noResults() {
 
 export function emptyBoard() {
   return `<div class="empty-state">
-    <div class="big-emoji">💡</div>
+    <div class="hero-ic"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 12C9.5 12 9 7.5 6 7.5M12 12C9.5 12 9 16.5 6 16.5M12 12c2.5 0 3-4.5 6-4.5M12 12c2.5 0 3 4.5 6 4.5"/><circle cx="12" cy="12" r="2.6" fill="#fff"/><circle cx="5" cy="7.5" r="1.7" fill="#fff"/><circle cx="5" cy="16.5" r="1.7" fill="#fff"/><circle cx="19" cy="7.5" r="1.7" fill="#fff"/><circle cx="19" cy="16.5" r="1.7" fill="#fff"/></svg></div>
     <h2>Bring your ideas in</h2>
     <p>Paste notes from Apple Notes (or any app), open text files, or just start writing below. Mindapp groups, sequences and maps them — without adding or removing a single sentence.</p>
     <div class="row">

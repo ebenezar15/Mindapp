@@ -5,8 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Mindapp</title>
   <meta name="description" content="Organise, sequence and group your notes and brainstorms — outline, kanban, mind map and more. Your words, untouched.">
-  <meta name="theme-color" content="#f5f5f7" media="(prefers-color-scheme: light)">
-  <meta name="theme-color" content="#1c1c1e" media="(prefers-color-scheme: dark)">
+  <meta name="theme-color" content="#f7f5ff" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#12052a" media="(prefers-color-scheme: dark)">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
@@ -21,7 +21,7 @@
   <div id="app" class="loading">
     <aside id="sidebar" aria-label="Boards and groups">
       <div class="side-head">
-        <div class="brand"><img src="icons/icon.svg" alt="" width="26" height="26"><span>Mindapp</span></div>
+        <div class="brand"><span class="brand-logo"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 12C9.5 12 9 7.5 6 7.5M12 12C9.5 12 9 16.5 6 16.5M12 12c2.5 0 3-4.5 6-4.5M12 12c2.5 0 3 4.5 6 4.5"/><circle cx="12" cy="12" r="2.6" fill="#fff"/><circle cx="5" cy="7.5" r="1.7" fill="#fff"/><circle cx="5" cy="16.5" r="1.7" fill="#fff"/><circle cx="19" cy="7.5" r="1.7" fill="#fff"/><circle cx="19" cy="16.5" r="1.7" fill="#fff"/></svg></span><span>Mindapp<span class="brand-sub">Ideas · Notes · Maps</span></span></div>
         <button class="icon-btn only-narrow" data-action="toggle-sidebar" aria-label="Close sidebar">✕</button>
       </div>
       <div class="side-scroll">
@@ -46,6 +46,7 @@
         <button class="side-btn" data-action="trash">🗑 Trash <span id="trash-count" class="count"></span></button>
         <button class="side-btn" data-action="settings">⚙︎ Settings</button>
         <button class="side-btn" data-action="help">？ Help</button>
+        <span class="offline-pill"><i></i>Works offline · stored on this device</span>
       </div>
     </aside>
     <div id="scrim" data-action="toggle-sidebar"></div>

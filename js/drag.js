@@ -82,15 +82,20 @@ export function initDrag(root, { onDrop, canDrag = () => true, label = (el) => e
     };
     const autoscroll = () => {
       if (!active) return;
-      const scroller = scrollParentAt(active.x, active.y);
-      if (scroller) {
-        const r = scroller.getBoundingClientRect();
-        const edge = 50, sp = 14;
-        if (active.y < r.top + edge) scroller.scrollTop -= sp;
-        else if (active.y > r.bottom - edge) scroller.scrollTop += sp;
-        if (active.x < r.left + edge) scroller.scrollLeft -= sp;
-        else if (active.x > r.right - edge) scroller.scrollLeft += sp;
-      }
+      // scroll the nearest container that can move in the direction the finger is pushing,
+      // falling back to the list the card came from (e.g. when over the capture bar)
+      const under = document.elementFromPoint(active.x, active.y);
+      const edge = 50, sp = 14;
+      const push = (axis, pos) => {
+        const el = scrollerFor(under, axis) || scrollerFor(active.el, axis);
+        if (!el) return;
+        const r = el.getBoundingClientRect();
+        const [lo, hi] = axis === 'y' ? [r.top, r.bottom] : [r.left, r.right];
+        if (pos < lo + edge) el[axis === 'y' ? 'scrollTop' : 'scrollLeft'] -= sp;
+        else if (pos > hi - edge) el[axis === 'y' ? 'scrollTop' : 'scrollLeft'] += sp;
+      };
+      push('y', active.y);
+      push('x', active.x);
       active.raf = requestAnimationFrame(autoscroll);
     };
     const update = () => {
@@ -122,11 +127,11 @@ export function initDrag(root, { onDrop, canDrag = () => true, label = (el) => e
   });
 }
 
-function scrollParentAt(x, y) {
-  let el = document.elementFromPoint(x, y);
+function scrollerFor(el, axis) {
   while (el && el !== document.body) {
-    const s = getComputedStyle(el);
-    if ((/(auto|scroll)/.test(s.overflowY) && el.scrollHeight > el.clientHeight) || (/(auto|scroll)/.test(s.overflowX) && el.scrollWidth > el.clientWidth)) return el;
+    const st = getComputedStyle(el);
+    if (axis === 'y' && /(auto|scroll)/.test(st.overflowY) && el.scrollHeight > el.clientHeight + 1) return el;
+    if (axis === 'x' && /(auto|scroll)/.test(st.overflowX) && el.scrollWidth > el.clientWidth + 1) return el;
     el = el.parentElement;
   }
   return null;

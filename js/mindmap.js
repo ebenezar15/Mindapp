@@ -46,7 +46,7 @@ function box(text, font, maxW, lh, padX, padY, maxLines) {
 }
 
 export function renderMindmap(ctx) {
-  return `<div class="mindmap" id="mm"><svg id="mm-svg" xmlns="http://www.w3.org/2000/svg"><g id="mm-vp"></g></svg>
+  return `<div class="mindmap" id="mm"><svg id="mm-svg" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="mm-grad" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#7c3aed"/><stop offset=".55" stop-color="#a855f7"/><stop offset="1" stop-color="#d946ef"/></linearGradient></defs><g id="mm-vp"></g></svg>
     <div class="mm-tools">
       <button data-mm="in" title="Zoom in" aria-label="Zoom in">＋</button>
       <button data-mm="out" title="Zoom out" aria-label="Zoom out">－</button>

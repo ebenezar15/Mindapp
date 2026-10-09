@@ -1,5 +1,5 @@
 // Offline support: cache the app shell, serve it cache-first, refresh in the background.
-const VERSION = 'mindapp-v1';
+const VERSION = 'mindapp-v2';
 const SHELL = [
   './', 'index.html', 'manifest.webmanifest', 'css/styles.css',
   'js/app.js', 'js/store.js', 'js/parse.js', 'js/nlp.js', 'js/util.js', 'js/drag.js',

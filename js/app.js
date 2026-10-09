@@ -43,6 +43,12 @@ function applyTheme() {
   const t = S.state.settings.theme;
   if (t === 'auto') document.documentElement.removeAttribute('data-theme');
   else document.documentElement.setAttribute('data-theme', t);
+  // tint the iOS / macOS window chrome to match
+  const chrome = { light: '#f7f5ff', dark: '#12052a', sepia: '#f1e8d6' }[t];
+  $$('meta[name="theme-color"]').forEach((m, i) => {
+    if (chrome) { m.content = chrome; m.removeAttribute('media'); }
+    else { m.content = i ? '#12052a' : '#f7f5ff'; m.media = `(prefers-color-scheme: ${i ? 'dark' : 'light'})`; }
+  });
 }
 
 // ---------- context for views ----------
@@ -892,7 +898,7 @@ function duplicatesDialog() {
 function settingsDialog() {
   const st = S.state.settings;
   const body = h(`<div class="body">
-    <label class="small-text">Appearance<select class="field" id="st-theme"><option value="auto">Match system</option><option value="light">Light</option><option value="dark">Dark</option></select></label>
+    <label class="small-text">Appearance<select class="field" id="st-theme"><option value="auto">Match system</option><option value="light">Light — violet</option><option value="dark">Dark — violet night</option><option value="sepia">Sepia — warm paper</option></select></label>
     <label class="small-text">Imports: one card per<select class="field" id="st-split"><option value="sentence">Sentence</option><option value="line">Line</option><option value="paragraph">Paragraph</option></select></label>
     <label class="opt"><input type="checkbox" id="st-cap" ${st.captureSplit !== false ? 'checked' : ''}> Quick capture: split a multi-sentence thought into one card per sentence</label>
     <label class="opt"><input type="checkbox" id="st-titles" ${st.showGroupTitles ? 'checked' : ''}> Show group titles in Document view and exports</label>
@@ -959,6 +965,9 @@ function moreMenu() {
       if (!confirm(`Delete the board “${b.name}” and its ${S.live(b).length} notes from this device?`)) return;
       S.deleteBoard(b.id);
     } },
+    { icon: '◐', label: 'Theme…', sub: 'Light, violet night, sepia or match system', run: () => menu('Theme', [
+      ['auto', 'Match system'], ['light', 'Light — violet'], ['dark', 'Dark — violet night'], ['sepia', 'Sepia — warm paper'],
+    ].map(([v, l]) => ({ label: (S.state.settings.theme === v ? '✓ ' : '') + l, run: () => { S.setSetting('theme', v); applyTheme(); } }))) },
     { icon: '⚙︎', label: 'Settings', run: settingsDialog },
     { icon: '？', label: 'Help', run: helpDialog },
   ], { html: true });
