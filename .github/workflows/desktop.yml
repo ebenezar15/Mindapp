@@ -1,9 +1,12 @@
 name: Desktop apps
 
 # Builds Mindapp for Mac (Apple Silicon + Intel), Windows and Linux.
-# Run it from the Actions tab ("Run workflow"); download the zips from the run's Artifacts.
+# Runs when the app changes, or from the Actions tab ("Run workflow").
+# Download each platform's zip from the run's Artifacts section.
 on:
   workflow_dispatch:
+  push:
+    paths: ["desktop/**", "js/**", "css/**", "index.html", "icons/**", ".github/workflows/desktop.yml"]
 
 permissions:
   contents: read
@@ -27,5 +30,21 @@ jobs:
         run: npm ci && npm run build
       - uses: actions/upload-artifact@v4
         with:
-          name: Mindapp-desktop
-          path: desktop/dist/*.zip
+          name: Mindapp-Mac-AppleSilicon
+          path: desktop/dist/Mindapp-Mac-AppleSilicon.zip
+          compression-level: 0
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Mindapp-Mac-Intel
+          path: desktop/dist/Mindapp-Mac-Intel.zip
+          compression-level: 0
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Mindapp-Windows
+          path: desktop/dist/Mindapp-Windows.zip
+          compression-level: 0
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Mindapp-Linux
+          path: desktop/dist/Mindapp-Linux.zip
+          compression-level: 0
