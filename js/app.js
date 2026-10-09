@@ -8,6 +8,9 @@ import { renderOutline, renderKanban, renderCards, renderDocument, emptyBoard } 
 import { renderMindmap, mountMindmap, resetMindmapView } from './mindmap.js';
 import { toMarkdown, toText, toOPML, download, safeName } from './export.js';
 import { SAMPLE, SAMPLE_NAME } from './sample.js';
+import { voiceSupported, startDictation, stopDictation, isListening, insertAtCursor, unsupportedMessage } from './voice.js';
+
+const MIC_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg>';
 
 // ---------- UI state (not persisted) ----------
 const ui = {
@@ -190,7 +193,8 @@ function renderInspector() {
   el.innerHTML = `
     <div class="insp-head"><h2>${n.kind === 'heading' ? 'Heading' : 'Note'}</h2><button class="icon-btn" data-action="close-inspector" aria-label="Close">✕</button></div>
     <div class="insp-body">
-      <label>Text<textarea id="insp-text" spellcheck="true">${esc(n.text)}</textarea></label>
+      <label><span class="row" style="justify-content:space-between">Text<button class="mic-btn small" id="insp-mic" type="button" title="Dictate into this note" aria-label="Dictate">${MIC_ICON}</button></span><textarea id="insp-text" spellcheck="true">${esc(n.text)}</textarea></label>
+      <div id="insp-voice" class="voice-status" hidden></div>
       ${edited ? `<label>Original, word-for-word<div class="orig-box">${esc(n.orig)}</div><button class="btn small" data-action="revert-note">Restore original</button></label>` : ''}
       <label>Group<select class="field" id="insp-group"><option value="">Inbox</option>${b.groups.map(g => `<option value="${g.id}" ${g.id === n.groupId ? 'selected' : ''}>${esc(g.name)}</option>`).join('')}<option value="__new">＋ New group…</option></select></label>
       <label>Status<select class="field" id="insp-status">${STATUSES.map(s => `<option value="${s.id}" ${s.id === (n.status || 'idea') ? 'selected' : ''}>${s.name}</option>`).join('')}</select></label>
@@ -205,6 +209,12 @@ function renderInspector() {
       <div class="small-text muted">Added ${esc(fmtDate(n.created))}${src ? ` · from “${esc(src.name)}”` : ''}${n.updated !== n.created ? ` · changed ${esc(fmtDate(n.updated))}` : ''}</div>
     </div>`;
   const ta = $('#insp-text');
+  $('#insp-mic').addEventListener('click', (e) => {
+    e.preventDefault();
+    const btn = e.currentTarget;
+    if (isListening() && activeMic === btn) { stopDictation(); ta.dispatchEvent(new Event('change')); return; }
+    toggleMic(btn, ta, { statusEl: $('#insp-voice') });
+  });
   ta.addEventListener('change', () => {
     const v = ta.value.trim();
     if (!v) { ta.value = n.text; toast('A note can’t be empty — use Move to Trash instead.'); return; }
@@ -225,6 +235,37 @@ function renderInspector() {
     n.tags = [...new Set(e.target.value.split(/[,\s]+/).map(t => t.replace(/^#/, '').trim().toLowerCase()).filter(Boolean))];
     n.updated = Date.now();
   }));
+}
+
+// ---------- voice to text ----------
+let activeMic = null;
+/**
+ * Toggle dictation into a text box. Each finished phrase is inserted exactly as recognised.
+ * onPhrase(text) may return true to consume the phrase instead (hands-free brainstorming).
+ */
+function toggleMic(btn, ta, { onPhrase, statusEl } = {}) {
+  if (isListening() && activeMic === btn) { stopDictation(); return; }
+  if (isListening()) stopDictation();
+  if (!voiceSupported()) { toast(unsupportedMessage(), null, null, 9000); ta.focus(); return; }
+  activeMic = btn;
+  btn.classList.add('listening');
+  btn.setAttribute('aria-pressed', 'true');
+  const show = (t) => { if (statusEl) { statusEl.hidden = false; statusEl.innerHTML = `<span class="rec-dot"></span>${t ? esc(t) : 'Listening… speak naturally. Tap the mic again to stop.'}`; } };
+  show('');
+  startDictation({
+    lang: S.state.settings.voiceLang || undefined,
+    onInterim: show,
+    onFinal: (t) => { if (!(onPhrase && onPhrase(t))) insertAtCursor(ta, t); show(''); },
+    onEnd: () => {
+      btn.classList.remove('listening');
+      btn.setAttribute('aria-pressed', 'false');
+      if (statusEl) statusEl.hidden = true;
+      if (activeMic === btn) activeMic = null;
+      // back to the text so Enter / Add saves what you said
+      if (ta.isConnected) { ta.focus(); ta.setSelectionRange?.(ta.value.length, ta.value.length); }
+    },
+    onError: (m) => toast(m, null, null, 9000),
+  });
 }
 
 // ---------- capture bar ----------
@@ -443,7 +484,8 @@ function importDialog(prefill = '', prefillName = '') {
   const body = h(`<div class="body">
     <div class="tabs seg" style="align-self:start"><button class="on" data-tab="paste">Paste text</button><button data-tab="files">Open files</button></div>
     <div data-pane="paste">
-      <textarea class="big" id="imp-text" placeholder="Paste one or many notes here.\n\nIn Apple Notes: open a note → ⌘A (or Select All) → Copy, then paste here.">${esc(prefill)}</textarea>
+      <textarea class="big" id="imp-text" placeholder="Paste one or many notes here — or tap 🎙 to dictate.\n\nIn Apple Notes: open a note → ⌘A (or Select All) → Copy, then paste here.">${esc(prefill)}</textarea>
+      <div class="row" style="margin-top:6px"><button class="btn small" id="imp-mic" type="button">${MIC_ICON} Dictate</button><div id="imp-voice" class="voice-status" hidden style="flex:1"></div></div>
     </div>
     <div data-pane="files" hidden>
       <div class="drop-zone" id="imp-drop">Drop .txt, .md, .html, .rtf or .opml files here<br><br><button class="btn" id="imp-pick">Choose files…</button></div>
@@ -506,6 +548,7 @@ function importDialog(prefill = '', prefillName = '') {
     preview();
   };
   $('#imp-pick', body).addEventListener('click', () => pickFiles(addFiles));
+  $('#imp-mic', body).addEventListener('click', (e) => toggleMic(e.currentTarget, $('#imp-text', body), { statusEl: $('#imp-voice', body) }));
   const dz = $('#imp-drop', body);
   dz.addEventListener('dragover', (e) => { e.preventDefault(); dz.classList.add('hover'); });
   dz.addEventListener('dragleave', () => dz.classList.remove('hover'));
@@ -687,9 +730,14 @@ function brainstorm() {
         <button class="btn primary" id="bs-done">Finish</button>
       </div>
       <div class="bs-prompt" id="bs-prompt">Write whatever comes to mind. Press Enter after each thought — don’t edit, just keep going.</div>
-      <textarea class="bs-input" id="bs-input" rows="2" placeholder="Type a thought and press Enter…" autofocus></textarea>
+      <div class="bs-input-row">
+        <textarea class="bs-input" id="bs-input" rows="2" placeholder="Type or speak a thought and press Enter…" autofocus></textarea>
+        <button class="mic-btn big" id="bs-mic" type="button" title="Speak your thoughts (V)" aria-label="Voice to text" aria-pressed="false">${MIC_ICON}</button>
+      </div>
+      <div id="bs-voice" class="voice-status" hidden></div>
       <div class="bs-hint"><span>Enter = save thought · ⇧Enter = new line · Esc = finish</span>
         <label class="opt" style="font-size:12.5px"><input type="checkbox" id="bs-auto" checked> File into matching groups</label>
+        <label class="opt" style="font-size:12.5px" title="When you speak, each finished phrase is saved as its own thought — no need to press Enter"><input type="checkbox" id="bs-handsfree" ${S.state.settings.voiceHandsFree !== false ? 'checked' : ''}> 🎙 Hands-free: save each spoken thought</label>
         <span id="bs-count"></span></div>
       <div class="bs-stream" id="bs-stream"></div>
     </div>
@@ -744,6 +792,19 @@ function brainstorm() {
     if (e.key === 'Enter' && !e.shiftKey && !e.isComposing) { e.preventDefault(); add(); }
     if (e.key === 'Escape') { e.preventDefault(); finish(); }
   });
+  const bsMic = $('#bs-mic', el);
+  const micToggle = () => toggleMic(bsMic, input, {
+    statusEl: $('#bs-voice', el),
+    onPhrase: (t) => {
+      if (!$('#bs-handsfree', el).checked) return false;
+      insertAtCursor(input, t);
+      add();
+      return true;
+    },
+  });
+  bsMic.addEventListener('click', micToggle);
+  $('#bs-handsfree', el).addEventListener('change', (e) => S.setSetting('voiceHandsFree', e.target.checked));
+  el.addEventListener('keydown', (e) => { if ((e.key === 'v' || e.key === 'V') && e.target !== input && !modKey(e)) { e.preventDefault(); micToggle(); } });
   $('#bs-prompt-btn', el).addEventListener('click', () => {
     $('#bs-prompt', el).textContent = '💡 ' + PROMPTS[Math.floor(Math.random() * PROMPTS.length)];
     input.focus();
@@ -774,6 +835,7 @@ function brainstorm() {
     if (ins) { const n = S.noteById(ins.dataset.ins); if (n) { $('#bs-prompt', el).textContent = '↪ Building on: “' + n.text + '”'; input.focus(); } }
   });
   const finish = () => {
+    stopDictation();
     if (input.value.trim()) add();
     clearInterval(timer);
     el.remove();
@@ -803,7 +865,7 @@ function modal({ title, body, actions = [], wide = false, onMount }) {
   m.insertBefore(body, m.querySelector('footer'));
   const foot = m.querySelector('footer');
   if (!actions.length) foot.remove();
-  const close = () => { wrap.remove(); document.removeEventListener('keydown', onKey, true); };
+  const close = () => { if (activeMic && wrap.contains(activeMic)) stopDictation(); wrap.remove(); document.removeEventListener('keydown', onKey, true); };
   actions.forEach(a => {
     const bn = h(`<button class="btn${a.primary ? ' primary' : ''}${a.danger ? ' danger' : ''}">${esc(a.label)}</button>`);
     bn.addEventListener('click', async () => { const r = a.run ? await a.run() : undefined; if (r !== false) close(); });
@@ -895,6 +957,13 @@ function duplicatesDialog() {
   });
 }
 
+const VOICE_LANGS = [
+  ['', 'Same as this device'], ['en-US', 'English (US)'], ['en-GB', 'English (UK)'], ['en-IN', 'English (India)'], ['en-AU', 'English (Australia)'],
+  ['ta-IN', 'தமிழ் (Tamil)'], ['hi-IN', 'हिन्दी (Hindi)'], ['ml-IN', 'മലയാളം (Malayalam)'], ['te-IN', 'తెలుగు (Telugu)'], ['kn-IN', 'ಕನ್ನಡ (Kannada)'],
+  ['es-ES', 'Español'], ['fr-FR', 'Français'], ['de-DE', 'Deutsch'], ['pt-BR', 'Português (Brasil)'], ['it-IT', 'Italiano'], ['nl-NL', 'Nederlands'],
+  ['zh-CN', '中文 (普通话)'], ['ja-JP', '日本語'], ['ko-KR', '한국어'], ['ar-SA', 'العربية'],
+];
+
 function settingsDialog() {
   const st = S.state.settings;
   const body = h(`<div class="body">
@@ -902,13 +971,16 @@ function settingsDialog() {
     <label class="small-text">Imports: one card per<select class="field" id="st-split"><option value="sentence">Sentence</option><option value="line">Line</option><option value="paragraph">Paragraph</option></select></label>
     <label class="opt"><input type="checkbox" id="st-cap" ${st.captureSplit !== false ? 'checked' : ''}> Quick capture: split a multi-sentence thought into one card per sentence</label>
     <label class="opt"><input type="checkbox" id="st-titles" ${st.showGroupTitles ? 'checked' : ''}> Show group titles in Document view and exports</label>
+    <label class="small-text">Voice to text language<select class="field" id="st-voice">${VOICE_LANGS.map(([v, l]) => `<option value="${v}">${l}</option>`).join('')}</select></label>
+    <p class="muted small-text" style="margin-top:-6px">${voiceSupported() ? 'Tap 🎙 in the capture bar, Brainstorm, a note or Import. Words are inserted exactly as you say them.' : 'Built-in voice input isn’t available in this browser — use the 🎙 key on your keyboard to dictate instead.'}</p>
     <p class="muted small-text">Your notes are stored only on this device (offline, private). Use Sync → Email a backup to move them between devices.</p>
     <button class="btn danger" id="st-reset" style="justify-self:start">Erase all data on this device…</button>
   </div>`);
-  $('#st-theme', body).value = st.theme; $('#st-split', body).value = st.splitMode;
+  $('#st-theme', body).value = st.theme; $('#st-split', body).value = st.splitMode; $('#st-voice', body).value = st.voiceLang || '';
   modal({ title: 'Settings', body, actions: [{ label: 'Done', primary: true, run: () => {
     S.setSetting('theme', $('#st-theme', body).value); S.setSetting('splitMode', $('#st-split', body).value);
     S.setSetting('captureSplit', $('#st-cap', body).checked); S.setSetting('showGroupTitles', $('#st-titles', body).checked);
+    S.setSetting('voiceLang', $('#st-voice', body).value);
     applyTheme();
   } }] });
   $('#st-reset', body).addEventListener('click', async () => {
@@ -931,6 +1003,8 @@ function helpDialog() {
     <li>Paste many notes at once — headings and bullet lists are recognised and kept.</li></ul>
     <h4>⚡︎ Brainstorm</h4>
     <p>A distraction-free page: type, press Enter, repeat. Thoughts are filed into matching groups as you go, related ideas appear on the side, and prompts help you keep going.</p>
+    <h4>🎙 Voice to text</h4>
+    <p>Tap the microphone in the capture bar, in Brainstorm, in a note, or in Import — or press <kbd>V</kbd>. Your words are inserted exactly as recognised. In Brainstorm, <b>Hands-free</b> saves each spoken thought automatically, so you can think out loud. Choose the language in Settings. If the mic button isn’t available on your device, the 🎙 key on the iPhone/iPad keyboard dictates into any box.</p>
     <h4>✉︎ Sync with Mail</h4>
     <p>Sync → <b>Email a backup</b> → Mail. On your other device, open the email, save/open the attachment, then Sync → <b>Open a backup</b> → <b>Merge</b>. The newest edit of each note wins and nothing is silently dropped. You can also keep backups in iCloud Drive.</p>
     <h4>📱 Install on every Apple device</h4>
@@ -938,7 +1012,7 @@ function helpDialog() {
     <li><b>Mac:</b> Safari → File → <b>Add to Dock</b> (macOS Sonoma or later).</li>
     <li>Works offline once installed.</li></ul>
     <h4>⌨︎ Shortcuts</h4>
-    <p><kbd>N</kbd> new thought · <kbd>B</kbd> brainstorm · <kbd>O</kbd> organise · <kbd>/</kbd> search · <kbd>1</kbd>–<kbd>5</kbd> switch view · <kbd>⌘Z</kbd> undo · <kbd>⇧⌘Z</kbd> redo · <kbd>⌘</kbd>/<kbd>⇧</kbd>-click to select · <kbd>⌫</kbd> trash selected · <kbd>Esc</kbd> close</p>
+    <p><kbd>N</kbd> new thought · <kbd>V</kbd> voice · <kbd>B</kbd> brainstorm · <kbd>O</kbd> organise · <kbd>/</kbd> search · <kbd>1</kbd>–<kbd>5</kbd> switch view · <kbd>⌘Z</kbd> undo · <kbd>⇧⌘Z</kbd> redo · <kbd>⌘</kbd>/<kbd>⇧</kbd>-click to select · <kbd>⌫</kbd> trash selected · <kbd>Esc</kbd> close</p>
     <h4>✋ Moving things</h4>
     <p>Drag cards between groups and columns (on touch: press and hold, then drag). Drag group headers to reorder groups. In the mind map, drop a note on a branch to move it there.</p>
   </div>`, actions: [{ label: 'Got it', primary: true }] });
@@ -1166,6 +1240,7 @@ function wire() {
     if (e.key === 'Escape') ta.blur();
   });
   $('#capture-target').addEventListener('click', chooseTarget);
+  $('#capture-mic').addEventListener('click', () => toggleMic($('#capture-mic'), ta, { statusEl: $('#capture-voice') }));
 
   // paste a big chunk into the capture bar → offer import
   ta.addEventListener('paste', (e) => {
@@ -1204,6 +1279,7 @@ function wire() {
     const k = e.key.toLowerCase();
     if (k === 'n') { e.preventDefault(); ta.focus(); }
     else if (k === 'b') { e.preventDefault(); brainstorm(); }
+    else if (k === 'v') { e.preventDefault(); $('#capture-mic').click(); }
     else if (k === 'o') { e.preventDefault(); organiseOneClick(); }
     else if (k === '/') { e.preventDefault(); $('#search').focus(); }
     else if ('12345'.includes(k)) S.setSetting('view', ['outline', 'kanban', 'mindmap', 'cards', 'document'][+k - 1]);

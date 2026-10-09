@@ -1,9 +1,9 @@
 // Offline support: cache the app shell, serve it cache-first, refresh in the background.
-const VERSION = 'mindapp-v2';
+const VERSION = 'mindapp-v3';
 const SHELL = [
   './', 'index.html', 'manifest.webmanifest', 'css/styles.css',
   'js/app.js', 'js/store.js', 'js/parse.js', 'js/nlp.js', 'js/util.js', 'js/drag.js',
-  'js/views.js', 'js/mindmap.js', 'js/export.js', 'js/sample.js',
+  'js/views.js', 'js/mindmap.js', 'js/export.js', 'js/sample.js', 'js/voice.js',
   'icons/icon.svg', 'icons/apple-touch-icon.png', 'icons/icon-192.png', 'icons/icon-512.png',
 ];
 

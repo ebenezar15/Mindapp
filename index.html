@@ -95,9 +95,11 @@
       <footer id="capture">
         <div class="capture-box">
           <textarea id="capture-input" rows="1" placeholder="Write a thought…" title="Enter to add · Shift+Enter for a new line" aria-label="Quick capture"></textarea>
+          <button id="capture-mic" class="mic-btn" type="button" title="Voice to text (V)" aria-label="Voice to text" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg></button>
           <button id="capture-target" class="chip" title="Where this thought will go">Inbox</button>
           <button class="btn primary small" data-action="capture-add" aria-label="Add thought">Add</button>
         </div>
+        <div id="capture-voice" class="voice-status" hidden></div>
         <div id="capture-related" class="related-strip"></div>
       </footer>
     </main>
