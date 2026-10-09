@@ -26,8 +26,11 @@ jobs:
       - run: npm test
 
   deploy:
-    # Publishes the app to GitHub Pages (Settings → Pages → Source: GitHub Actions)
-    if: github.event_name != 'pull_request'
+    # Publishes the app to GitHub Pages once it's switched on:
+    # repository Settings → Pages → Source: GitHub Actions. Until then this job is skipped
+    # (a workflow isn't allowed to switch Pages on by itself).
+    if: github.event_name != 'pull_request' && vars.PAGES_ENABLED != 'false'
+    continue-on-error: true
     needs: test
     runs-on: ubuntu-latest
     environment:
@@ -36,8 +39,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: actions/configure-pages@v5
-        with:
-          enablement: true
       - uses: actions/upload-pages-artifact@v3
         with:
           path: .
