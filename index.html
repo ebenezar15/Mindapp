@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Mindapp</title>
+  <meta name="description" content="Organise, sequence and group your notes and brainstorms — outline, kanban, mind map and more. Your words, untouched.">
+  <meta name="theme-color" content="#f5f5f7" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#1c1c1e" media="(prefers-color-scheme: dark)">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="Mindapp">
+  <meta name="format-detection" content="telephone=no">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+  <div id="app" class="loading">
+    <aside id="sidebar" aria-label="Boards and groups">
+      <div class="side-head">
+        <div class="brand"><img src="icons/icon.svg" alt="" width="26" height="26"><span>Mindapp</span></div>
+        <button class="icon-btn only-narrow" data-action="toggle-sidebar" aria-label="Close sidebar">✕</button>
+      </div>
+      <div class="side-scroll">
+        <section>
+          <h3>Boards <button class="mini" data-action="new-board" title="New board">＋</button></h3>
+          <ul id="board-list" class="side-list"></ul>
+        </section>
+        <section>
+          <h3>Groups <button class="mini" data-action="new-group" title="New group">＋</button></h3>
+          <ul id="group-list" class="side-list"></ul>
+        </section>
+        <section id="tag-section">
+          <h3>Tags</h3>
+          <div id="tag-list" class="tag-cloud"></div>
+        </section>
+        <section>
+          <h3>Verbatim check</h3>
+          <div id="integrity"></div>
+        </section>
+      </div>
+      <div class="side-foot">
+        <button class="side-btn" data-action="trash">🗑 Trash <span id="trash-count" class="count"></span></button>
+        <button class="side-btn" data-action="settings">⚙︎ Settings</button>
+        <button class="side-btn" data-action="help">？ Help</button>
+      </div>
+    </aside>
+    <div id="scrim" data-action="toggle-sidebar"></div>
+
+    <main id="main">
+      <header id="topbar">
+        <div class="tb-row">
+          <button class="icon-btn" data-action="toggle-sidebar" aria-label="Show sidebar">☰</button>
+          <input id="board-name" class="board-name" aria-label="Board name" spellcheck="false">
+          <div class="tb-actions">
+            <button class="icon-btn" data-action="undo" title="Undo (⌘Z)" aria-label="Undo">↶</button>
+            <button class="icon-btn" data-action="redo" title="Redo (⇧⌘Z)" aria-label="Redo">↷</button>
+            <button class="btn ghost hide-xs" data-action="import" title="Import notes">⤓ Import</button>
+            <button class="btn ghost hide-xs" data-action="sync" title="Sync & export">✉︎ Sync</button>
+            <button class="btn ghost" data-action="brainstorm" title="Brainstorm mode (B)">⚡︎<span class="hide-xs"> Brainstorm</span></button>
+            <button class="btn primary" data-action="organise" title="Group & sequence everything in one click">✨<span class="hide-xs"> Organise</span></button>
+            <button class="icon-btn" data-action="more" aria-label="More">⋯</button>
+          </div>
+        </div>
+        <div class="tb-row second">
+          <nav class="seg" id="views" role="tablist" aria-label="View">
+            <button data-view="outline" role="tab">☰ Outline</button>
+            <button data-view="kanban" role="tab">▥ Kanban</button>
+            <button data-view="mindmap" role="tab">✺ Mind map</button>
+            <button data-view="cards" role="tab">▦ Cards</button>
+            <button data-view="document" role="tab">¶ Document</button>
+          </nav>
+          <div class="search-wrap">
+            <input id="search" type="search" placeholder="Search…" aria-label="Search notes" autocomplete="off">
+          </div>
+        </div>
+      </header>
+
+      <div id="selbar" hidden>
+        <span id="sel-count"></span>
+        <button class="btn small" data-action="sel-group">Group together</button>
+        <button class="btn small" data-action="sel-move">Move to…</button>
+        <button class="btn small" data-action="sel-organise">✨ Organise these</button>
+        <button class="btn small" data-action="sel-status">Status…</button>
+        <button class="btn small danger" data-action="sel-trash">Trash</button>
+        <button class="btn small ghost" data-action="sel-clear">Done</button>
+      </div>
+
+      <section id="view" tabindex="-1"></section>
+
+      <footer id="capture">
+        <div class="capture-box">
+          <textarea id="capture-input" rows="1" placeholder="Write a thought…" title="Enter to add · Shift+Enter for a new line" aria-label="Quick capture"></textarea>
+          <button id="capture-target" class="chip" title="Where this thought will go">Inbox</button>
+          <button class="btn primary small" data-action="capture-add" aria-label="Add thought">Add</button>
+        </div>
+        <div id="capture-related" class="related-strip"></div>
+      </footer>
+    </main>
+
+    <aside id="inspector" aria-label="Note details" hidden></aside>
+  </div>
+
+  <div id="modal-root"></div>
+  <div id="toast" role="status" aria-live="polite"></div>
+  <input type="file" id="file-input" hidden multiple accept=".txt,.md,.markdown,.html,.htm,.rtf,.json,.mindapp,.opml,text/*,application/json">
+
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>

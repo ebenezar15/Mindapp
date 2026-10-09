@@ -1,0 +1,19 @@
+{
+  "name": "Mindapp — Notes, Brainstorms & Mind Maps",
+  "short_name": "Mindapp",
+  "description": "Organise, sequence and group your notes and brainstorms. Outline, kanban, mind map, cards and document views. Your words, untouched.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "display_override": ["window-controls-overlay", "standalone"],
+  "background_color": "#f5f5f7",
+  "theme_color": "#f5f5f7",
+  "orientation": "any",
+  "categories": ["productivity", "utilities"],
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "icons/icon-512-maskable.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" },
+    { "src": "icons/icon.svg", "sizes": "any", "type": "image/svg+xml" }
+  ]
+}

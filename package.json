@@ -1,0 +1,12 @@
+{
+  "name": "mindapp",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Organise, sequence and group notes and brainstorms — outline, kanban, mind map, cards and document views. Installable on iPhone, iPad and Mac.",
+  "type": "module",
+  "scripts": {
+    "start": "npx --yes http-server -c-1 -p 8080 .",
+    "test": "node --test tests/*.test.mjs"
+  },
+  "license": "MIT"
+}
